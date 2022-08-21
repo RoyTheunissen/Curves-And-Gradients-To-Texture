@@ -21,7 +21,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         private const TextureWrapMode DefaultWrapMode = TextureWrapMode.Clamp;
         private const FilterMode DefaultFilterMode = FilterMode.Bilinear;
 
-        [SerializeField] private CurveModes curveMode;
+        [SerializeField] private CurveModes curveMode = CurveModes.Local;
         public CurveModes CurveMode => curveMode;
 
         [SerializeField, HideInInspector] private AnimationCurveAsset animationCurveAsset;

@@ -19,7 +19,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
         private const TextureWrapMode DefaultWrapMode = TextureWrapMode.Clamp;
         private const FilterMode DefaultFilterMode = FilterMode.Bilinear;
 
-        [SerializeField] private Modes mode;
+        [SerializeField] private Modes mode = Modes.Local;
         public Modes Mode => mode;
 
         [SerializeField, HideInInspector] private GradientAsset gradientAsset;

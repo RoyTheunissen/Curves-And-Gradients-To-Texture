@@ -1,0 +1,104 @@
+using System;
+using UnityEngine;
+
+namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
+{
+    /// <summary>
+    /// Caches a texture for a Gradient. Helps pass easily tweakable gradient data on to a shader.
+    /// </summary>
+    [Serializable]
+    public class GradientTexture 
+    {
+        public enum Modes
+        {
+            Asset,
+            Local,
+        }
+
+        private const int DefaultResolution = 512;
+        private const TextureWrapMode DefaultWrapMode = TextureWrapMode.Clamp;
+        private const FilterMode DefaultFilterMode = FilterMode.Bilinear;
+
+        [SerializeField] private Modes mode;
+        public Modes Mode => mode;
+
+        [SerializeField, HideInInspector] private GradientAsset gradientAsset;
+
+        [SerializeField, HideInInspector]
+        private Gradient gradientLocal = new Gradient
+        {
+            alphaKeys = new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) },
+            colorKeys = new[] { new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) },
+        };
+        
+        [SerializeField] private int resolution = DefaultResolution;
+        [SerializeField] private TextureWrapMode wrapMode = DefaultWrapMode;
+        [SerializeField] private FilterMode filterMode = DefaultFilterMode;
+        
+        [NonSerialized] private Texture2D cachedTexture;
+
+        private Gradient Gradient => mode == Modes.Asset ? gradientAsset : gradientLocal;
+
+        public GradientTexture()
+        {
+            resolution = DefaultResolution;
+            wrapMode = DefaultWrapMode;
+            filterMode = DefaultFilterMode;
+        }
+
+        public GradientTexture(GradientAsset gradientAsset) : this()
+        {
+            mode = Modes.Asset;
+            this.gradientAsset = gradientAsset;
+        }
+
+        public GradientTexture(Gradient gradient) : this()
+        {
+            mode = Modes.Local;
+            gradientLocal = gradient;
+        }
+
+        public Texture2D Texture
+        {
+            get
+            {
+                if (cachedTexture == null)
+                    GenerateTexture();
+                
+                return cachedTexture;
+            }
+        }
+
+        public void GenerateTexture()
+        {
+            if (cachedTexture == null)
+                cachedTexture = new Texture2D(resolution, 1, TextureFormat.RGBA32, false);
+
+            if (cachedTexture.width != resolution)
+                cachedTexture.Reinitialize(resolution, 1);
+
+            cachedTexture.wrapMode = wrapMode;
+            cachedTexture.filterMode = filterMode;
+
+            Color[] colors = new Color[resolution];
+            bool hasGradient = Gradient != null;
+            for(int i = 0; i < resolution; ++i)
+            {
+                if (!hasGradient)
+                {
+                    colors[i] = new Color(0, 0, 0, 1);
+                    continue;
+                }
+                
+                float t = (float)i / resolution;
+
+                Color color = Gradient == null ? Color.black : Gradient.Evaluate(t);
+
+                colors[i] = color;
+            }
+
+            cachedTexture.SetPixels(colors);
+            cachedTexture.Apply(false);
+        }
+    }
+}

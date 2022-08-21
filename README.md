@@ -2,11 +2,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE.md)
 ![GitHub Follow](https://img.shields.io/github/followers/RoyTheunissen?label=RoyTheunissen&style=social) ![Twitter](https://img.shields.io/twitter/follow/Roy_Theunissen?style=social)
 
-_🛑 <b><u>TO DO</u></b>_
+_Contains utilities for defining a curve or gradient in the inspector and automatically generating a texture for that to pass on to shaders._
 
 ## About the Project
 
-🛑 <b><u>TO DO</u></b>
+Sometimes you're working on a shader and you really need to finesse the curve of certain values, or perhaps some kind of colour gradient. Very quickly you'll grab your image processing application of choice and whip up a nice texture file. This workflow is tedious though. Make a new texture, tweak the values, press CTRL+S, switch back to Unity, wait for it to import, and _then_ you see your results. There is an inherent separation between making the texture and seeing the end result.
+
+To cut down on iteration time you would ideally just tweak a curve or gradient right in the Inspector and see it apply to your shader in real-time.
+
+But surely it would be very tedious to make such a utility? Yes it was. I hope it can be of some use to you.
 
 [TO DO Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)    |    [TO DO Article](https://blog.roytheunissen.com)
 
@@ -50,7 +54,7 @@ The package is available on the [openupm registry](https://openupm.com). It's re
 
 🛑 <b><u>TO DO</u></b>
 ```
-openupm add com.roytheunissen.assetpalette
+openupm add com.roytheunissen.curvesandgradientstotexture
 ```
 
 ### Manifest
@@ -58,13 +62,13 @@ You can also install via git URL by adding this entry in your **manifest.json**
 
 🛑 <b><u>TO DO</u></b>
 ```
-"com.roytheunissen.assetpalette": "https://github.com/RoyTheunissen/Asset-Palette.git"
+"com.roytheunissen.curvesandgradientstotexture": "https://github.com/RoyTheunissen/Curves-And-Gradients-To-Texture.git"
 ```
 
 ### Unity Package Manager
 🛑 <b><u>TO DO</u></b>
 ```
-from Window->Package Manager, click on the + sign and Add from git: https://github.com/RoyTheunissen/Asset-Palette.git
+from Window->Package Manager, click on the + sign and Add from git: https://github.com/RoyTheunissen/Curves-And-Gradients-To-Texture.git
 ```
 
 

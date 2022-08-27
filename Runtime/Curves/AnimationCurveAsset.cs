@@ -15,11 +15,15 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             get => animationCurve;
             set
             {
-                // Create a new animation curve but with the same times and values.
+                // Create a new animation curve but with copies of its keys.
                 animationCurve = new AnimationCurve();
                 foreach (Keyframe inputKeyframe in value.keys)
                 {
-                    animationCurve.AddKey(inputKeyframe.time, inputKeyframe.value);
+                    animationCurve.AddKey(
+                        new Keyframe(
+                            inputKeyframe.time, inputKeyframe.value,
+                            inputKeyframe.inTangent, inputKeyframe.outTangent,
+                            inputKeyframe.inWeight, inputKeyframe.outWeight));
                 }
             }
         }

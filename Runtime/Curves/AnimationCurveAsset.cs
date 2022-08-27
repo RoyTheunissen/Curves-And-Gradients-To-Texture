@@ -10,7 +10,19 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
     {
         [SerializeField]
         private AnimationCurve animationCurve = AnimationCurve.Linear(0.0f, 0.0f, 1.0f, 1.0f);
-        public AnimationCurve AnimationCurve => animationCurve;
+        public AnimationCurve AnimationCurve
+        {
+            get => animationCurve;
+            set
+            {
+                // Create a new animation curve but with the same times and values.
+                animationCurve = new AnimationCurve();
+                foreach (Keyframe inputKeyframe in value.keys)
+                {
+                    animationCurve.AddKey(inputKeyframe.time, inputKeyframe.value);
+                }
+            }
+        }
 
         public float Evaluate(float time)
         {

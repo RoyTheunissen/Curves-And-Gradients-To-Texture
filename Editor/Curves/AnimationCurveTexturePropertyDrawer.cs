@@ -18,6 +18,13 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             {
                 // One line for the preview.
                 height += EditorGUIUtility.singleLineHeight;
+                
+                AnimationCurveTexture animationCurveTexture =
+                    this.GetActualObject<AnimationCurveTexture>(fieldInfo, property);
+                
+                // And another for local curve's Save To Asset button.
+                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
+                    height += EditorGUIUtility.singleLineHeight;
             }
             
             return height;
@@ -49,6 +56,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             }
 
             bool shouldUpdateTexture = EditorGUI.EndChangeCheck();
+            bool saveToAsset = false;
             
             // Draw some of the more internal properties for you to tweak once.
             if (property.isExpanded)
@@ -56,6 +64,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 // Draw the current texture.
                 Texture2D texture = animationCurveTexture.Texture;
                 Rect previewRect = position.GetControlLastRect();
+                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
+                    previewRect = previewRect.GetControlPreviousRect();
 
                 Rect labelRect = previewRect.GetLabelRect(out Rect textureRect).Indent(1);
                 EditorGUI.LabelField(labelRect, new GUIContent("Preview"));
@@ -78,6 +88,13 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                     EditorGUI.DrawRect(textureRect, Color.black);
                 else
                     GUI.DrawTexture(textureRect, texture, ScaleMode.StretchToFill);
+
+                // Draw a button to save the local curve to an asset.
+                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
+                {
+                    Rect saveToAssetRect = previewRect.GetControlNextRect().Indent(1);
+                    saveToAsset = GUI.Button(saveToAssetRect, "Save To Asset");
+                }
             }
 
             // Re-bake the texture again if needed.
@@ -87,7 +104,46 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 property.serializedObject.ApplyModifiedProperties();
                 animationCurveTexture.GenerateTextureForCurve();
             }
+            
+            // NOTE: We need to do this at the end apparently otherwise an exception is thrown.
+            if (saveToAsset)
+                SaveToAsset(curveProperty, property);
         }
-        
+
+        private void SaveToAsset(SerializedProperty curveProperty, SerializedProperty owner)
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "Save Animation Curve Asset", "Animation Curve", "asset",
+                "Save this local animation curve to a re-usable animation curve asset.");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            // First check if that asset existed already.
+            AnimationCurveAsset asset = AssetDatabase.LoadAssetAtPath<AnimationCurveAsset>(path);
+            bool existedAlready = asset != null;
+
+            if (!existedAlready)
+            {
+                // Create a new animation curve asset for this curve.
+                asset = ScriptableObject.CreateInstance<AnimationCurveAsset>();
+                asset.AnimationCurve = curveProperty.animationCurveValue;
+                AssetDatabase.CreateAsset(asset, path);
+            }
+            else
+            {
+                // Update the existing asset with this animation curve.
+                using SerializedObject so = new SerializedObject(asset);
+                so.Update();
+                so.FindProperty("animationCurve").animationCurveValue = curveProperty.animationCurveValue;
+                so.ApplyModifiedProperties();
+            }
+
+            // Set the animation curve texture to Asset mode and assign the selected asset.
+            owner.serializedObject.Update();
+            owner.FindPropertyRelative("curveMode").enumValueIndex =
+                (int)AnimationCurveTexture.CurveModes.Asset;
+            owner.FindPropertyRelative("animationCurveAsset").objectReferenceValue = asset;
+            owner.serializedObject.ApplyModifiedProperties();
+        }
     }
 }

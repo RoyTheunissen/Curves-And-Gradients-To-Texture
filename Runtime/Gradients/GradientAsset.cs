@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
@@ -13,7 +14,21 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
             alphaKeys = new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) },
             colorKeys = new[] { new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) },
         };
-        public Gradient Gradient => gradient;
+        public Gradient Gradient
+        {
+            get => gradient;
+            set
+            {
+                gradient = new Gradient();
+                GradientColorKey[] colorKeys = new GradientColorKey[value.colorKeys.Length];
+                Array.Copy(value.colorKeys, colorKeys, colorKeys.Length);
+                
+                GradientAlphaKey[] alphaKeys = new GradientAlphaKey[value.alphaKeys.Length];
+                Array.Copy(value.alphaKeys, alphaKeys, alphaKeys.Length);
+                
+                gradient.SetKeys(colorKeys, alphaKeys);
+            }
+        }
 
         public Color Evaluate(float time)
         {

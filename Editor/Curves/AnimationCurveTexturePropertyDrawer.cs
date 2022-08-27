@@ -1,3 +1,4 @@
+using System.IO;
 using RoyTheunissen.CurvesAndGradientsToTexture.Extensions;
 using UnityEditor;
 using UnityEngine;
@@ -85,22 +86,44 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 else
                     GUI.DrawTexture(textureRect, texture, ScaleMode.StretchToFill);
                 
+                AnimationCurveAsset asset =
+                    (AnimationCurveAsset)property.FindPropertyRelative(CurvePropertyAsset).objectReferenceValue;
+                
                 Rect buttonRect = previewRect.GetControlNextRect().Indent(1);
                 if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
                 {
                     // Draw a button to save the local curve to an asset.
-                    bool saveToAsset = GUI.Button(buttonRect, "Save To Asset");
-                    if (saveToAsset)
-                        SaveToAsset(curveProperty, property);
+                    string pathToSaveTo = asset == null ? "" : AssetDatabase.GetAssetPath(asset);
+                    bool hasPathToSaveTo = !string.IsNullOrEmpty(pathToSaveTo);
+                    Rect saveRect = buttonRect;
+                    Rect saveAsRect = hasPathToSaveTo
+                        ? buttonRect.GetSubRectFromRight(70, out saveRect)
+                        : buttonRect;
+                    
+                    // Big button to save to the current asset (only shows up if an asset is selected)
+                    if (hasPathToSaveTo)
+                    {
+                        string fileName = Path.GetFileName(pathToSaveTo);
+                        bool save = GUI.Button(saveRect, $"Save ({fileName})");
+                        if (save)
+                            SaveToAsset(curveProperty, property, pathToSaveTo);
+                    }
+                    
+                    // Smaller button to pick a new asset to save to.
+                    bool saveAs = GUI.Button(saveAsRect, "Save As...");
+                    if (saveAs)
+                        SaveToAsset(curveProperty, property, null, pathToSaveTo);
                 }
                 else
                 {
                     // Draw a button to start editing a local copy of this asset.
+                    bool wasGuiEnabled = GUI.enabled;
+                    GUI.enabled = asset != null;
                     bool editLocalCopy = GUI.Button(buttonRect, "Edit Local Copy");
+                    GUI.enabled = wasGuiEnabled;
                     if (editLocalCopy)
                     {
                         // Make a copy of the animation curve.
-                        AnimationCurveAsset asset = (AnimationCurveAsset)curveProperty.objectReferenceValue;
                         property.FindPropertyRelative(CurvePropertyLocal).animationCurveValue = asset.AnimationCurve;
                         
                         // Switch to local mode.
@@ -119,11 +142,16 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             }
         }
 
-        private void SaveToAsset(SerializedProperty curveProperty, SerializedProperty owner)
+        private void SaveToAsset(
+            SerializedProperty curveProperty, SerializedProperty owner, string path = null, string startingPath = null)
         {
-            string path = EditorUtility.SaveFilePanelInProject(
-                "Save Animation Curve Asset", "Animation Curve", "asset",
-                "Save this local animation curve to a re-usable animation curve asset.");
+            if (string.IsNullOrEmpty(path))
+            {
+                path = EditorUtility.SaveFilePanelInProject(
+                    "Save Animation Curve Asset", "Animation Curve", "asset",
+                    "Save this local animation curve to a re-usable animation curve asset.", startingPath);
+            }
+
             if (string.IsNullOrEmpty(path))
                 return;
 

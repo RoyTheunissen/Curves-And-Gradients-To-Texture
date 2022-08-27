@@ -19,11 +19,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 animationCurve = new AnimationCurve();
                 foreach (Keyframe inputKeyframe in value.keys)
                 {
-                    animationCurve.AddKey(
-                        new Keyframe(
-                            inputKeyframe.time, inputKeyframe.value,
-                            inputKeyframe.inTangent, inputKeyframe.outTangent,
-                            inputKeyframe.inWeight, inputKeyframe.outWeight));
+                    animationCurve.AddKey(inputKeyframe);
                 }
             }
         }

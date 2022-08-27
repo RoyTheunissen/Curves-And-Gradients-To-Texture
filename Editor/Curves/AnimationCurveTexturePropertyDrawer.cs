@@ -42,7 +42,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
             
             // Draw a field next to the label so you can edit it straight away.
-            string curvePropertyName = animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Asset
+            string curvePropertyName = animationCurveTexture.Mode == AnimationCurveTexture.Modes.Asset
                 ? CurvePropertyAsset
                 : CurvePropertyLocal;
             SerializedProperty curveProperty = property.FindPropertyRelative(curvePropertyName);
@@ -90,7 +90,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                     (AnimationCurveAsset)property.FindPropertyRelative(CurvePropertyAsset).objectReferenceValue;
                 
                 Rect buttonRect = previewRect.GetControlNextRect().Indent(1);
-                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
+                if (animationCurveTexture.Mode == AnimationCurveTexture.Modes.Local)
                 {
                     // Draw a button to save the local curve to an asset.
                     string pathToSaveTo = asset == null ? "" : AssetDatabase.GetAssetPath(asset);
@@ -127,8 +127,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                         property.FindPropertyRelative(CurvePropertyLocal).animationCurveValue = asset.AnimationCurve;
                         
                         // Switch to local mode.
-                        property.FindPropertyRelative("curveMode").enumValueIndex =
-                            (int)AnimationCurveTexture.CurveModes.Local;
+                        property.FindPropertyRelative("mode").enumValueIndex =
+                            (int)AnimationCurveTexture.Modes.Local;
                     }
                 }
             }
@@ -177,8 +177,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 
             // Set the animation curve texture to Asset mode and assign the selected asset.
             owner.serializedObject.Update();
-            owner.FindPropertyRelative("curveMode").enumValueIndex =
-                (int)AnimationCurveTexture.CurveModes.Asset;
+            owner.FindPropertyRelative("mode").enumValueIndex =
+                (int)AnimationCurveTexture.Modes.Asset;
             owner.FindPropertyRelative("animationCurveAsset").objectReferenceValue = asset;
             owner.serializedObject.ApplyModifiedProperties();
         }

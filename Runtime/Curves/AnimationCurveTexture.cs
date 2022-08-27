@@ -1,6 +1,7 @@
 using System;
 using RoyTheunissen.CurvesAndGradientsToTexture.Curves;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 {
@@ -10,7 +11,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
     [Serializable]
     public class AnimationCurveTexture
     {
-        public enum CurveModes
+        public enum Modes
         {
             Asset,
             Local,
@@ -21,8 +22,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         private const TextureWrapMode DefaultWrapMode = TextureWrapMode.Clamp;
         private const FilterMode DefaultFilterMode = FilterMode.Bilinear;
 
-        [SerializeField] private CurveModes curveMode = CurveModes.Local;
-        public CurveModes CurveMode => curveMode;
+        [FormerlySerializedAs("curveMode")]
+        [SerializeField] private Modes mode = Modes.Local;
+        public Modes Mode => mode;
 
         [SerializeField, HideInInspector] private AnimationCurveAsset animationCurveAsset;
 
@@ -36,7 +38,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         
         [NonSerialized] private Texture2D cachedTexture;
 
-        private AnimationCurve Curve => curveMode == CurveModes.Asset ? animationCurveAsset : animationCurveLocal;
+        private AnimationCurve Curve => mode == Modes.Asset ? animationCurveAsset : animationCurveLocal;
 
         public AnimationCurveTexture()
         {
@@ -47,13 +49,13 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 
         public AnimationCurveTexture(AnimationCurveAsset animationCurveAsset) : this()
         {
-            curveMode = CurveModes.Asset;
+            mode = Modes.Asset;
             this.animationCurveAsset = animationCurveAsset;
         }
 
         public AnimationCurveTexture(AnimationCurve animationCurve) : this()
         {
-            curveMode = CurveModes.Local;
+            mode = Modes.Local;
             animationCurveLocal = animationCurve;
         }
 

@@ -268,5 +268,27 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Extensions
             while (iterator.NextVisible(false) &&
                    (!hasSibling || !SerializedProperty.EqualContents(iterator, nextSibling)));
         }
+
+        public static Gradient GetGradient(this SerializedProperty gradientProperty)
+        {
+            PropertyInfo propertyInfo = typeof(SerializedProperty).GetProperty(
+                "gradientValue", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (propertyInfo == null)
+                return null;
+            
+            return propertyInfo.GetValue(gradientProperty, null) as Gradient;
+        }
+        
+        public static void SetGradient(this SerializedProperty gradientProperty, Gradient gradient)
+        {
+            PropertyInfo propertyInfo = typeof(SerializedProperty).GetProperty(
+                "gradientValue", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (propertyInfo == null)
+                return;
+            
+            propertyInfo.SetValue(gradientProperty, gradient);
+        }
     }
 }

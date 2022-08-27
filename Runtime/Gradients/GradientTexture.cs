@@ -24,7 +24,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
 
         [SerializeField, HideInInspector] private GradientAsset gradientAsset;
 
-        [SerializeField, HideInInspector]
+        [SerializeField, HideInInspector, GradientUsage(true)]
         private Gradient gradientLocal = new Gradient
         {
             alphaKeys = new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) },

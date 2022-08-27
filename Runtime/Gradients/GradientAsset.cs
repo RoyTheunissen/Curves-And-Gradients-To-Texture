@@ -9,7 +9,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
     [CreateAssetMenu(fileName = "GradientAsset", menuName = "ScriptableObject/GradientAsset")]
     public class GradientAsset : ScriptableObject
     {
-        [SerializeField] private Gradient gradient = new Gradient
+        [SerializeField, GradientUsage(true)] private Gradient gradient = new Gradient
         {
             alphaKeys = new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) },
             colorKeys = new[] { new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) },

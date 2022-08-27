@@ -10,6 +10,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
     [CustomPropertyDrawer(typeof(AnimationCurveTexture))]
     public class AnimationCurveTexturePropertyDrawer : PropertyDrawer
     {
+        private const string CurvePropertyAsset = "animationCurveAsset";
+        private const string CurvePropertyLocal = "animationCurveLocal";
+        
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             float height = EditorGUI.GetPropertyHeight(property, label);
@@ -18,13 +21,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             {
                 // One line for the preview.
                 height += EditorGUIUtility.singleLineHeight;
-                
-                AnimationCurveTexture animationCurveTexture =
-                    this.GetActualObject<AnimationCurveTexture>(fieldInfo, property);
-                
-                // And another for local curve's Save To Asset button.
-                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
-                    height += EditorGUIUtility.singleLineHeight;
+
+                // And another for the edit or save button.
+                height += EditorGUIUtility.singleLineHeight;
             }
             
             return height;
@@ -43,8 +42,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             
             // Draw a field next to the label so you can edit it straight away.
             string curvePropertyName = animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Asset
-                ? "animationCurveAsset"
-                : "animationCurveLocal";
+                ? CurvePropertyAsset
+                : CurvePropertyLocal;
             SerializedProperty curveProperty = property.FindPropertyRelative(curvePropertyName);
             EditorGUI.PropertyField(curveRect, curveProperty, GUIContent.none);
             
@@ -56,16 +55,13 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             }
 
             bool shouldUpdateTexture = EditorGUI.EndChangeCheck();
-            bool saveToAsset = false;
-            
+
             // Draw some of the more internal properties for you to tweak once.
             if (property.isExpanded)
             {
                 // Draw the current texture.
                 Texture2D texture = animationCurveTexture.Texture;
-                Rect previewRect = position.GetControlLastRect();
-                if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
-                    previewRect = previewRect.GetControlPreviousRect();
+                Rect previewRect = position.GetControlLastRect().GetControlPreviousRect();
 
                 Rect labelRect = previewRect.GetLabelRect(out Rect textureRect).Indent(1);
                 EditorGUI.LabelField(labelRect, new GUIContent("Preview"));
@@ -88,12 +84,29 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                     EditorGUI.DrawRect(textureRect, Color.black);
                 else
                     GUI.DrawTexture(textureRect, texture, ScaleMode.StretchToFill);
-
-                // Draw a button to save the local curve to an asset.
+                
+                Rect buttonRect = previewRect.GetControlNextRect().Indent(1);
                 if (animationCurveTexture.CurveMode == AnimationCurveTexture.CurveModes.Local)
                 {
-                    Rect saveToAssetRect = previewRect.GetControlNextRect().Indent(1);
-                    saveToAsset = GUI.Button(saveToAssetRect, "Save To Asset");
+                    // Draw a button to save the local curve to an asset.
+                    bool saveToAsset = GUI.Button(buttonRect, "Save To Asset");
+                    if (saveToAsset)
+                        SaveToAsset(curveProperty, property);
+                }
+                else
+                {
+                    // Draw a button to start editing a local copy of this asset.
+                    bool editLocalCopy = GUI.Button(buttonRect, "Edit Local Copy");
+                    if (editLocalCopy)
+                    {
+                        // Make a copy of the animation curve.
+                        AnimationCurveAsset asset = (AnimationCurveAsset)curveProperty.objectReferenceValue;
+                        property.FindPropertyRelative(CurvePropertyLocal).animationCurveValue = asset.AnimationCurve;
+                        
+                        // Switch to local mode.
+                        property.FindPropertyRelative("curveMode").enumValueIndex =
+                            (int)AnimationCurveTexture.CurveModes.Local;
+                    }
                 }
             }
 
@@ -104,10 +117,6 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 property.serializedObject.ApplyModifiedProperties();
                 animationCurveTexture.GenerateTextureForCurve();
             }
-            
-            // NOTE: We need to do this at the end apparently otherwise an exception is thrown.
-            if (saveToAsset)
-                SaveToAsset(curveProperty, property);
         }
 
         private void SaveToAsset(SerializedProperty curveProperty, SerializedProperty owner)

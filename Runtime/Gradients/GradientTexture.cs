@@ -13,6 +13,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
         {
             Asset,
             Local,
+            Texture,
         }
 
         private const int DefaultResolution = 512;
@@ -23,6 +24,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
         public Modes Mode => mode;
 
         [SerializeField, HideInInspector] private GradientAsset gradientAsset;
+        
+        [SerializeField, HideInInspector] private Texture2D texture;
 
         [SerializeField, HideInInspector, GradientUsage(true)]
         private Gradient gradientLocal = new Gradient
@@ -33,8 +36,11 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
         
         [SerializeField] private int resolution = DefaultResolution;
         [SerializeField] private TextureWrapMode wrapMode = DefaultWrapMode;
-        [SerializeField] private FilterMode filterMode = DefaultFilterMode;
+        public TextureWrapMode WrapMode => wrapMode;
         
+        [SerializeField] private FilterMode filterMode = DefaultFilterMode;
+        public FilterMode FilterMode => filterMode;
+
         [NonSerialized] private Texture2D cachedTexture;
 
         private Gradient Gradient => mode == Modes.Asset ? gradientAsset : gradientLocal;
@@ -62,10 +68,29 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
         {
             get
             {
+                if (mode == Modes.Texture)
+                    return texture == null ? DefaultTexture : texture;
+
                 if (cachedTexture == null)
                     GenerateTexture();
                 
                 return cachedTexture;
+            }
+        }
+        
+        private static Texture2D cachedDefaultTexture;
+        private static bool didCacheDefaultTexture;
+        private static Texture2D DefaultTexture
+        {
+            get
+            {
+                if (!didCacheDefaultTexture)
+                {
+                    didCacheDefaultTexture = true;
+                    cachedDefaultTexture = new Texture2D(1, 1);
+                    cachedDefaultTexture.SetPixels(new[] { Color.white });
+                }
+                return cachedDefaultTexture;
             }
         }
 

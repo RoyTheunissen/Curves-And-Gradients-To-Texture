@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using RoyTheunissen.CurvesAndGradientsToTexture.Extensions;
 using UnityEditor;
@@ -11,8 +12,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
     [CustomPropertyDrawer(typeof(GradientTexture))]
     public class GradientTexturePropertyDrawer : PropertyDrawer
     {
-        private const string GradientAsset = "gradientAsset";
-        private const string GradientLocal = "gradientLocal";
+        private const string GradientPropertyAsset = "gradientAsset";
+        private const string GradientPropertyLocal = "gradientLocal";
+        private const string GradientPropertyTexture = "texture";
         
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -24,7 +26,11 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
                 height += EditorGUIUtility.singleLineHeight;
                 
                 // And another for the edit or save button.
-                height += EditorGUIUtility.singleLineHeight;
+                if (property.FindPropertyRelative("mode").enumValueIndex != (int)GradientTexture.Modes.Texture)
+                {
+                    // There's an edit/save button and then also an Export To Texture button.
+                    height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 2;
+                }
             }
             
             return height;
@@ -41,9 +47,21 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
             
             // Draw a field next to the label so you can edit it straight away.
-            string gradientPropertyName = gradientTexture.Mode == GradientTexture.Modes.Asset
-                ? GradientAsset
-                : GradientLocal;
+            string gradientPropertyName = null;
+            switch (gradientTexture.Mode)
+            {
+                case GradientTexture.Modes.Asset:
+                    gradientPropertyName = GradientPropertyAsset;
+                    break;
+                case GradientTexture.Modes.Local:
+                    gradientPropertyName = GradientPropertyLocal;
+                    break;
+                case GradientTexture.Modes.Texture:
+                    gradientPropertyName = GradientPropertyTexture;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             SerializedProperty gradientProperty = property.FindPropertyRelative(gradientPropertyName);
             EditorGUI.PropertyField(gradientRect, gradientProperty, GUIContent.none);
             
@@ -56,12 +74,16 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
 
             bool shouldUpdateTexture = EditorGUI.EndChangeCheck();
             
+            bool isTextureMode = gradientTexture.Mode == GradientTexture.Modes.Texture;
+            
             // Draw some of the more internal properties for you to tweak once.
             if (property.isExpanded)
             {
                 // Draw the current texture.
                 Texture2D texture = gradientTexture.Texture;
-                Rect previewRect = position.GetControlLastRect().GetControlPreviousRect();
+                Rect previewRect = position.GetControlLastRect();
+                if (!isTextureMode)
+                    previewRect = previewRect.GetControlPreviousRect().GetControlPreviousRect();
 
                 Rect labelRect = previewRect.GetLabelRect(out Rect textureRect).Indent(1);
                 EditorGUI.LabelField(labelRect, new GUIContent("Preview"));
@@ -86,7 +108,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
                     GUI.DrawTexture(textureRect, texture, ScaleMode.StretchToFill);
                 
                 GradientAsset asset =
-                    (GradientAsset)property.FindPropertyRelative(GradientAsset).objectReferenceValue;
+                    (GradientAsset)property.FindPropertyRelative(GradientPropertyAsset).objectReferenceValue;
                 
                 Rect buttonRect = previewRect.GetControlNextRect().Indent(1);
                 if (gradientTexture.Mode == GradientTexture.Modes.Local)
@@ -113,7 +135,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
                     if (saveAs)
                         SaveToAsset(gradientProperty, property, null, pathToSaveTo);
                 }
-                else
+                else if (gradientTexture.Mode == GradientTexture.Modes.Asset)
                 {
                     // Draw a button to start editing a local copy of this asset.
                     bool wasGuiEnabled = GUI.enabled;
@@ -123,11 +145,23 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
                     if (editLocalCopy)
                     {
                         // Make a copy of the asset.
-                        property.FindPropertyRelative(GradientLocal).SetGradient(asset.Gradient);
+                        property.FindPropertyRelative(GradientPropertyLocal).SetGradient(asset.Gradient);
                         
                         // Switch to local mode.
                         property.FindPropertyRelative("mode").enumValueIndex = (int)GradientTexture.Modes.Local;
                     }
+                }
+
+                if (gradientTexture.Mode != GradientTexture.Modes.Texture)
+                {
+                    buttonRect = buttonRect.GetControlNextRect();
+                    bool wasGuiEnabled = GUI.enabled;
+                    GUI.enabled = asset != null || gradientTexture.Mode == GradientTexture.Modes.Local;
+                    bool exportToTexture = GUI.Button(buttonRect, "Export To Texture");
+                    string pathToSaveTo = asset == null ? "" : AssetDatabase.GetAssetPath(asset);
+                    if (exportToTexture)
+                        ExportToTexture(gradientTexture, property, null, pathToSaveTo);
+                    GUI.enabled = wasGuiEnabled;
                 }
             }
 
@@ -139,7 +173,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
                 gradientTexture.GenerateTexture();
             }
         }
-        
+
         private void SaveToAsset(
             SerializedProperty gradientProperty, SerializedProperty owner, string path = null, string startingPath = null)
         {
@@ -177,6 +211,41 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
             owner.serializedObject.Update();
             owner.FindPropertyRelative("mode").enumValueIndex = (int)GradientTexture.Modes.Asset;
             owner.FindPropertyRelative("gradientAsset").objectReferenceValue = asset;
+            owner.serializedObject.ApplyModifiedProperties();
+        }
+
+        private void ExportToTexture(
+            GradientTexture gradientTexture, SerializedProperty owner, string path = null, string startingPath = null)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                path = EditorUtility.SaveFilePanelInProject(
+                    "Export Gradient To Texture", "Gradient", "png", "Export this gradient as a texture.",
+                    startingPath);
+            }
+
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            // Write the texture to a PNG file.
+            byte[] bytes = gradientTexture.Texture.EncodeToPNG();
+            const string assetsFolder = "Assets";
+            string absolutePath = path.Substring(assetsFolder.Length + 1);
+            absolutePath = Application.dataPath + Path.AltDirectorySeparatorChar + absolutePath;
+            File.WriteAllBytes(absolutePath, bytes);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            
+            // Let's make sure we assign the right settings.
+            TextureImporter textureImporter = (TextureImporter)AssetImporter.GetAtPath(path);
+            textureImporter.wrapMode = gradientTexture.WrapMode;
+            textureImporter.filterMode = gradientTexture.FilterMode;
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+
+            // Set the gradient texture to Texture mode and assign the created texture.
+            Texture2D textureAsset = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            owner.serializedObject.Update();
+            owner.FindPropertyRelative("mode").enumValueIndex = (int)GradientTexture.Modes.Texture;
+            owner.FindPropertyRelative("texture").objectReferenceValue = textureAsset;
             owner.serializedObject.ApplyModifiedProperties();
         }
     }

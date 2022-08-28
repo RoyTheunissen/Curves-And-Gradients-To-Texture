@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using RoyTheunissen.CurvesAndGradientsToTexture.Extensions;
 using UnityEditor;
@@ -16,6 +17,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
     {
         private const string CurvePropertyAsset = "animationCurveAsset";
         private const string CurvePropertyLocal = "animationCurveLocal";
+        private const string CurvePropertyTexture = "texture";
         
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -25,9 +27,13 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             {
                 // One line for the preview.
                 height += EditorGUIUtility.singleLineHeight;
-
+                
                 // And another for the edit or save button.
-                height += EditorGUIUtility.singleLineHeight;
+                if (property.FindPropertyRelative("mode").enumValueIndex != (int)AnimationCurveTexture.Modes.Texture)
+                {
+                    // There's an edit/save button and then also an Export To Texture button.
+                    height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 2;
+                }
             }
             
             return height;
@@ -45,9 +51,21 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
             
             // Draw a field next to the label so you can edit it straight away.
-            string curvePropertyName = animationCurveTexture.Mode == AnimationCurveTexture.Modes.Asset
-                ? CurvePropertyAsset
-                : CurvePropertyLocal;
+            string curvePropertyName = null;
+            switch (animationCurveTexture.Mode)
+            {
+                case AnimationCurveTexture.Modes.Asset:
+                    curvePropertyName = CurvePropertyAsset;
+                    break;
+                case AnimationCurveTexture.Modes.Local:
+                    curvePropertyName = CurvePropertyLocal;
+                    break;
+                case AnimationCurveTexture.Modes.Texture:
+                    curvePropertyName = CurvePropertyTexture;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             SerializedProperty curveProperty = property.FindPropertyRelative(curvePropertyName);
             EditorGUI.PropertyField(curveRect, curveProperty, GUIContent.none);
             
@@ -60,12 +78,16 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 
             bool shouldUpdateTexture = EditorGUI.EndChangeCheck();
 
+            bool isTextureMode = animationCurveTexture.Mode == AnimationCurveTexture.Modes.Texture;
+
             // Draw some of the more internal properties for you to tweak once.
             if (property.isExpanded)
             {
                 // Draw the current texture.
                 Texture2D texture = animationCurveTexture.Texture;
-                Rect previewRect = position.GetControlLastRect().GetControlPreviousRect();
+                Rect previewRect = position.GetControlLastRect();
+                if (!isTextureMode)
+                    previewRect = previewRect.GetControlPreviousRect().GetControlPreviousRect();
 
                 Rect labelRect = previewRect.GetLabelRect(out Rect textureRect).Indent(1);
                 EditorGUI.LabelField(labelRect, new GUIContent("Preview"));
@@ -117,7 +139,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                     if (saveAs)
                         SaveToAsset(curveProperty, property, null, pathToSaveTo);
                 }
-                else
+                else if (animationCurveTexture.Mode == AnimationCurveTexture.Modes.Asset)
                 {
                     // Draw a button to start editing a local copy of this asset.
                     bool wasGuiEnabled = GUI.enabled;
@@ -133,6 +155,18 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                         property.FindPropertyRelative("mode").enumValueIndex =
                             (int)AnimationCurveTexture.Modes.Local;
                     }
+                }
+                
+                if (animationCurveTexture.Mode != AnimationCurveTexture.Modes.Texture)
+                {
+                    buttonRect = buttonRect.GetControlNextRect();
+                    bool wasGuiEnabled = GUI.enabled;
+                    GUI.enabled = asset != null || animationCurveTexture.Mode == AnimationCurveTexture.Modes.Local;
+                    bool exportToTexture = GUI.Button(buttonRect, "Export To Texture");
+                    string pathToSaveTo = asset == null ? "" : AssetDatabase.GetAssetPath(asset);
+                    if (exportToTexture)
+                        ExportToTexture(animationCurveTexture, property, null, pathToSaveTo);
+                    GUI.enabled = wasGuiEnabled;
                 }
             }
 
@@ -183,6 +217,45 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             owner.FindPropertyRelative("mode").enumValueIndex =
                 (int)AnimationCurveTexture.Modes.Asset;
             owner.FindPropertyRelative("animationCurveAsset").objectReferenceValue = asset;
+            owner.serializedObject.ApplyModifiedProperties();
+        }
+
+        private void ExportToTexture(
+            AnimationCurveTexture animationCurveTexture, SerializedProperty owner, string path = null,
+            string startingPath = null)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                path = EditorUtility.SaveFilePanelInProject(
+                    "Export AnimationCurve To Texture", "AnimationCurve", "png",
+                    "Export this animationCurve as a texture.",
+                    startingPath);
+            }
+
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            // Write the texture to a PNG file.
+            byte[] bytes = animationCurveTexture.Texture.EncodeToPNG();
+            const string assetsFolder = "Assets";
+            string absolutePath = path.Substring(assetsFolder.Length + 1);
+            absolutePath = Application.dataPath + Path.AltDirectorySeparatorChar + absolutePath;
+            File.WriteAllBytes(absolutePath, bytes);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+
+            // Let's make sure we assign the right settings.
+            TextureImporter textureImporter = (TextureImporter)AssetImporter.GetAtPath(path);
+            textureImporter.wrapMode = animationCurveTexture.WrapMode;
+            textureImporter.filterMode = animationCurveTexture.FilterMode;
+            textureImporter.mipmapEnabled = false;
+            textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+
+            // Set the AnimationCurveTexture to Texture mode and assign the created texture.
+            Texture2D textureAsset = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            owner.serializedObject.Update();
+            owner.FindPropertyRelative("mode").enumValueIndex = (int)AnimationCurveTexture.Modes.Texture;
+            owner.FindPropertyRelative("texture").objectReferenceValue = textureAsset;
             owner.serializedObject.ApplyModifiedProperties();
         }
     }

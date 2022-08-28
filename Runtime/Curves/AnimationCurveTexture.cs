@@ -18,6 +18,7 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         {
             Asset,
             Local,
+            Texture,
         }
         
         private const float DefaultValueMultiplier = 1.0f;
@@ -34,10 +35,15 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         [SerializeField, HideInInspector]
         private AnimationCurve animationCurveLocal = AnimationCurve.Linear(0, 0, 1, 1);
         
+        [SerializeField, HideInInspector] private Texture2D texture;
+        
         [SerializeField] private float valueMultiplier = DefaultValueMultiplier;
         [SerializeField] private int resolution = DefaultResolution;
         [SerializeField] private TextureWrapMode wrapMode = DefaultWrapMode;
+        public TextureWrapMode WrapMode => wrapMode;
+
         [SerializeField] private FilterMode filterMode = DefaultFilterMode;
+        public FilterMode FilterMode => filterMode;
         
         [NonSerialized] private Texture2D cachedTexture;
 
@@ -66,10 +72,29 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
         {
             get
             {
+                if (mode == Modes.Texture)
+                    return texture == null ? DefaultTexture : texture;
+
                 if (cachedTexture == null)
                     GenerateTextureForCurve();
                 
                 return cachedTexture;
+            }
+        }
+        
+        private static Texture2D cachedDefaultTexture;
+        private static bool didCacheDefaultTexture;
+        private static Texture2D DefaultTexture
+        {
+            get
+            {
+                if (!didCacheDefaultTexture)
+                {
+                    didCacheDefaultTexture = true;
+                    cachedDefaultTexture = new Texture2D(1, 1);
+                    cachedDefaultTexture.SetPixels(new[] { Color.white });
+                }
+                return cachedDefaultTexture;
             }
         }
 

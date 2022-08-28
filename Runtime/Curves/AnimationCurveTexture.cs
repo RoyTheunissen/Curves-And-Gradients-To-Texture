@@ -7,6 +7,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 {
     /// <summary>
     /// Caches a texture for an Animation Curve. Helps pass easily tweakable curve data on to a shader.
+    ///
+    /// NOTE: Despite the apparent similarity, this code is not shared with GradientTexture because
+    /// I expect these two utilities to be diverging a lot, so any effort to consolidate the two will likely be undone.
     /// </summary>
     [Serializable]
     public class AnimationCurveTexture

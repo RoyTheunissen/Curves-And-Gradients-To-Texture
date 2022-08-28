@@ -8,6 +8,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
 {
     /// <summary>
     /// Draws the gradient itself but also allows you to unfold it and tweak some of the more advanced settings.
+    ///
+    /// NOTE: Despite the apparent similarity, this code is not shared with AnimationCurveTexturePropertyDrawer because
+    /// I expect these two utilities to be diverging a lot, so any effort to consolidate the two will likely be undone.
     /// </summary>
     [CustomPropertyDrawer(typeof(GradientTexture))]
     public class GradientTexturePropertyDrawer : PropertyDrawer
@@ -239,9 +242,11 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
             TextureImporter textureImporter = (TextureImporter)AssetImporter.GetAtPath(path);
             textureImporter.wrapMode = gradientTexture.WrapMode;
             textureImporter.filterMode = gradientTexture.FilterMode;
+            textureImporter.mipmapEnabled = false;
+            textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 
-            // Set the gradient texture to Texture mode and assign the created texture.
+            // Set the GradientTexture to Texture mode and assign the created texture.
             Texture2D textureAsset = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             owner.serializedObject.Update();
             owner.FindPropertyRelative("mode").enumValueIndex = (int)GradientTexture.Modes.Texture;

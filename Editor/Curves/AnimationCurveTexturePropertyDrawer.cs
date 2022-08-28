@@ -7,6 +7,9 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
 {
     /// <summary>
     /// Draws the curve itself but also allows you to unfold the curve and tweak some of the more advanced settings.
+    ///
+    /// NOTE: Despite the apparent similarity, this code is not shared with GradientTexturePropertyDrawer because
+    /// I expect these two utilities to be diverging a lot, so any effort to consolidate the two will likely be undone. 
     /// </summary>
     [CustomPropertyDrawer(typeof(AnimationCurveTexture))]
     public class AnimationCurveTexturePropertyDrawer : PropertyDrawer

@@ -8,7 +8,7 @@ _Contains utilities for defining a curve or gradient in the inspector and automa
 
 Sometimes you're working on a shader and you really need to finesse the curve of certain values, or perhaps some kind of colour gradient. Very quickly you'll grab your image processing application of choice and whip up a nice texture file. This workflow is tedious though. Make a new texture, tweak the values, press CTRL+S, switch back to Unity, wait for it to import, and _then_ you see your results. There is an inherent separation between making the texture and seeing the end result.
 
-To cut down on iteration time you would ideally just tweak a curve or gradient right in the Inspector and see it apply to your shader in real-time.
+To cut down on iteration time you would ideally just tweak a curve or gradient in the Inspector and see it apply to your shader in real-time.
 
 But surely it would be very tedious to make such a utility? Yes it was. I hope it can be of some use to you.
 
@@ -18,11 +18,17 @@ But surely it would be very tedious to make such a utility? Yes it was. I hope i
 
 ## Getting Started
 
-- 🛑 <b><u>TO DO</u></b>
+- Add an `AnimationCurveTexture` or `GradientTexture` field to your script
+- Send it to a shader via a `MaterialPropertyBlock` or Global Shader Property by accessing its `Texture` property.
+- Tweak the values by generating a new texture for this field (Local Mode) or from a re-usable Animation Curve Asset.
+    - I recommend just working in Local mode, and once you're happy with the values, saving it to an Asset or a Texture.
+- See the result of your changes in real-time and approach the optimal values faster.
+
+![Screenshot](Documentation~/Screenshot.PNG)
 
 ## Compatibility
 
-🛑 <b><u>TO DO</u></b>
+It has been tested in 2021.3.2f1, but as far as I know it's not dependent on any 2021-specific features and will work in older versions, too.
 
 ## Installation
 
@@ -52,7 +58,6 @@ You can check out this repository as a submodule into your project's Assets fold
 ### OpenUPM
 The package is available on the [openupm registry](https://openupm.com). It's recommended to install it via [openupm-cli](https://github.com/openupm/openupm-cli).
 
-🛑 <b><u>TO DO</u></b>
 ```
 openupm add com.roytheunissen.curvesandgradientstotexture
 ```
@@ -60,13 +65,11 @@ openupm add com.roytheunissen.curvesandgradientstotexture
 ### Manifest
 You can also install via git URL by adding this entry in your **manifest.json**
 
-🛑 <b><u>TO DO</u></b>
 ```
 "com.roytheunissen.curvesandgradientstotexture": "https://github.com/RoyTheunissen/Curves-And-Gradients-To-Texture.git"
 ```
 
 ### Unity Package Manager
-🛑 <b><u>TO DO</u></b>
 ```
 from Window->Package Manager, click on the + sign and Add from git: https://github.com/RoyTheunissen/Curves-And-Gradients-To-Texture.git
 ```

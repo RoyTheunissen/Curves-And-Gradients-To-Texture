@@ -12,7 +12,7 @@ To cut down on iteration time you would ideally just tweak a curve or gradient i
 
 But surely it would be very tedious to make such a utility? Yes it was. I hope it can be of some use to you.
 
-[TO DO Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)    |    [TO DO Article](https://blog.roytheunissen.com)
+<!-- [TO DO Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)    |    [TO DO Article](https://blog.roytheunissen.com) -->
 
 ![Example](Documentation~/Example.gif)
 

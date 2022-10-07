@@ -51,6 +51,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
             set => animationCurve.postWrapMode = value;
         }
 
+        public float Duration => animationCurve.GetDuration();
+
         public static implicit operator AnimationCurve(AnimationCurveAsset animationCurveAsset)
         {
             return animationCurveAsset == null ? null : animationCurveAsset.AnimationCurve;

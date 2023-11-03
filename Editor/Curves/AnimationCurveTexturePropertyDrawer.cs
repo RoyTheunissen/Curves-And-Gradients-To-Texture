@@ -45,12 +45,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                 this.GetActualObject<AnimationCurveTexture>(fieldInfo, property);
 
             EditorGUI.BeginChangeCheck();
-
-            // Draw the header.
-            Rect foldoutRect = position.GetControlFirstRect().GetLabelRect(out Rect curveRect);
-            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
             
-            // Draw a field next to the label so you can edit it straight away.
+            // Figure out what the curve property is.
             string curvePropertyName = null;
             switch (animationCurveTexture.Mode)
             {
@@ -67,6 +63,14 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Curves
                     throw new ArgumentOutOfRangeException();
             }
             SerializedProperty curveProperty = property.FindPropertyRelative(curvePropertyName);
+
+            // Draw the header.
+            Rect foldoutRect = position.GetControlFirstRect().GetLabelRect(out Rect curveRect);
+            EditorGUI.BeginProperty(foldoutRect, label, curveProperty);
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
+            EditorGUI.EndProperty();
+            
+            // Draw a field next to the label so you can edit it straight away.
             EditorGUI.PropertyField(curveRect, curveProperty, GUIContent.none);
             
             // Draw the children, too.

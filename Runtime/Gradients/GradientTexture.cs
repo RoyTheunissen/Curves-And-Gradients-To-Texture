@@ -36,6 +36,8 @@ namespace RoyTheunissen.CurvesAndGradientsToTexture.Gradients
             alphaKeys = new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) },
             colorKeys = new[] { new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) },
         };
+
+        public Gradient GradientLocal => gradientLocal;
         
         [SerializeField] private int resolution = DefaultResolution;
         [SerializeField] private TextureWrapMode wrapMode = DefaultWrapMode;

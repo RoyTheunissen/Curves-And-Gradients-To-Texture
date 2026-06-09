@@ -45,13 +45,23 @@
 
             animationCurve.keys = keyframes;
         }
+        
+        public static Keyframe GetLastKey(this AnimationCurve animationCurve)
+        {
+            if (animationCurve.length < 2)
+                return default;
+            
+            return animationCurve[animationCurve.length - 1];
+        }
 
         public static float GetDuration(this AnimationCurve animationCurve)
         {
-            if (animationCurve.length < 2)
-                return 0.0f;
-            
-            return animationCurve[animationCurve.length - 1].time;
+            return animationCurve.GetLastKey().time;
+        }
+        
+        public static float GetLastValue(this AnimationCurve animationCurve)
+        {
+            return animationCurve.GetLastKey().value;
         }
     }
 }
